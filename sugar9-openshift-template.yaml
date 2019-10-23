@@ -3,7 +3,45 @@ kind: Template
 metadata:
   creationTimestamp: null
   name: sugar9-openshift-template
+parameters:
+  - name: PROJECT_NAME 
+    displayName: Inserisci il nome del progetto 
+    required: true 
+  - name: DATABASE_VOLUME_CAPACITY
+    displayName: Mysql Volume Capacity
+    description: Volume space available for data, e.g. 512Mi, 2Gi.
+    value: 1Gi
+    required: true
+  - name: WEB_VOLUME_CAPACITY
+    displayName: Web Volume Capacity
+    description: Volume space available for data, e.g. 512Mi, 2Gi.
+    value: 1Gi
+    required: true
+
 objects: 
+
+
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: sugar9-html
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: "${WEB_VOLUME_CAPACITY}"
+
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: sugar9-mysql
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: "${DATABASE_VOLUME_CAPACITY}"
 
 - apiVersion: image.openshift.io/v1
   kind: ImageStream
@@ -129,6 +167,9 @@ objects:
           openshift.io/generated-by: OpenShiftWebConsole
       spec:
         volumes:
+        - name: sugar9-html
+          persistentVolumeClaim:
+            claimName: sugar9-html
         containers:
           - name: web
             image: 
@@ -139,6 +180,8 @@ objects:
                 protocol: TCP
             resources: {}
             volumeMounts:
+            - name: sugar9-html
+              mountPath: "/var/www/html"
             terminationMessagePath: /dev/termination-log
             terminationMessagePolicy: File
             imagePullPolicy: IfNotPresent
@@ -269,6 +312,9 @@ objects:
           openshift.io/generated-by: OpenShiftWebConsole
       spec:
         volumes:
+        - name: sugar9-mysql
+          persistentVolumeClaim:
+            claimName: sugar9-mysql
         containers:
           - name: db
             image:
@@ -279,6 +325,8 @@ objects:
                 protocol: TCP
             resources: {}
             volumeMounts:
+            - name: sugar9-mysql
+              mountPath: "/var/lib/mysql"
             terminationMessagePath: /dev/termination-log
             terminationMessagePolicy: File
             imagePullPolicy: IfNotPresent
@@ -337,6 +385,9 @@ objects:
           openshift.io/generated-by: OpenShiftWebConsole
       spec:
         volumes:
+        - name: sugar9-html
+          persistentVolumeClaim:
+            claimName: sugar9-html
         containers:
           - name: cron
             image:
@@ -345,6 +396,8 @@ objects:
                 protocol: TCP
             resources: {}
             volumeMounts:
+            - name: sugar9-html
+              mountPath: "/var/www/html"
             terminationMessagePath: /dev/termination-log
             terminationMessagePolicy: File
             imagePullPolicy: IfNotPresent
@@ -468,10 +521,7 @@ objects:
         wildcardPolicy: None
         routerCanonicalHostname: apps-crc.testing
 
-parameters:
-  - name: PROJECT_NAME 
-    displayName: Inserisci il nome del progetto 
-    required: true 
+
 
 
 
