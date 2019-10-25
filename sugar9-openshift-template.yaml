@@ -17,6 +17,12 @@ parameters:
     description: Volume space available for data, e.g. 512Mi, 2Gi.
     value: 1Gi
     required: true
+  - name: REPO_SUGAR
+    displayName: Url repo
+    value: https://github.com/stefanos87/sugar9
+    required: true
+
+    
 
 objects: 
 
@@ -43,80 +49,80 @@ objects:
       requests:
         storage: "${DATABASE_VOLUME_CAPACITY}"
 
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: web
-    namespace: "${PROJECT_NAME}"
-  spec:
-    lookupPolicy:
-      local: false
-    tags:
-      - name: '1.8'
-        from:
-          kind: DockerImage
-          name: 'stefanos87/sugar9-apache-php:1.8'
-        generation: 2
-        importPolicy: {}
-        referencePolicy:
-          type: Source
+# - apiVersion: image.openshift.io/v1
+#   kind: ImageStream
+#   metadata:
+#     name: web
+#     namespace: "${PROJECT_NAME}"
+#   spec:
+#     lookupPolicy:
+#       local: false
+#     tags:
+#       - name: '1.8'
+#         from:
+#           kind: DockerImage
+#           name: 'stefanos87/sugar9-apache-php:1.8'
+#         generation: 2
+#         importPolicy: {}
+#         referencePolicy:
+#           type: Source
 
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: db
-    namespace: "${PROJECT_NAME}"
-  spec:
-    lookupPolicy:
-      local: false
-    tags:
-      - name: '1.0'
-        from:
-          kind: DockerImage
-          name: 'stefanos87/sugar9mysql57:1.0'
-        generation: 2
-        importPolicy: {}
-        referencePolicy:
-          type: Source
+# - apiVersion: image.openshift.io/v1
+#   kind: ImageStream
+#   metadata:
+#     name: db
+#     namespace: "${PROJECT_NAME}"
+#   spec:
+#     lookupPolicy:
+#       local: false
+#     tags:
+#       - name: '1.0'
+#         from:
+#           kind: DockerImage
+#           name: 'stefanos87/sugar9mysql57:1.0'
+#         generation: 2
+#         importPolicy: {}
+#         referencePolicy:
+#           type: Source
 
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: elasticsearch
-    namespace: "${PROJECT_NAME}"
-  spec:
-    lookupPolicy:
-      local: false
-    tags:
-      - name: 5.6.7
-        from:
-          kind: DockerImage
-          name: 'elasticsearch:5.6.7'
-        generation: 2
-        importPolicy: {}
-        referencePolicy:
-          type: Source
+# - apiVersion: image.openshift.io/v1
+#   kind: ImageStream
+#   metadata:
+#     name: elasticsearch
+#     namespace: "${PROJECT_NAME}"
+#   spec:
+#     lookupPolicy:
+#       local: false
+#     tags:
+#       - name: 5.6.7
+#         from:
+#           kind: DockerImage
+#           name: 'elasticsearch:5.6.7'
+#         generation: 2
+#         importPolicy: {}
+#         referencePolicy:
+#           type: Source
 
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    name: cron
-    namespace: "${PROJECT_NAME}"
-  spec:
-    lookupPolicy:
-      local: false
-    tags:
-      - name: '1.0'
-        annotations:
-          openshift.io/generated-by: OpenShiftWebConsole
-          openshift.io/imported-from: 'stefanos87/sugar9cron:1.0'
-        from:
-          kind: DockerImage
-          name: 'stefanos87/sugar9cron:1.0'
-        generation: 2
-        importPolicy: {}
-        referencePolicy:
-          type: Source
+# - apiVersion: image.openshift.io/v1
+#   kind: ImageStream
+#   metadata:
+#     name: cron
+#     namespace: "${PROJECT_NAME}"
+#   spec:
+#     lookupPolicy:
+#       local: false
+#     tags:
+#       - name: '1.0'
+#         annotations:
+#           openshift.io/generated-by: OpenShiftWebConsole
+#           openshift.io/imported-from: 'stefanos87/sugar9cron:1.0'
+#         from:
+#           kind: DockerImage
+#           name: 'stefanos87/sugar9cron:1.0'
+#         generation: 2
+#         importPolicy: {}
+#         referencePolicy:
+#           type: Source
 
 - kind: DeploymentConfig
   apiVersion: apps.openshift.io/v1
@@ -140,16 +146,6 @@ objects:
       resources: {}
       activeDeadlineSeconds: 21600
     triggers:
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-            - web
-          from:
-            kind: ImageStreamTag
-      
-            name: 'web:1.8'
-          lastTriggeredImage: 
       - type: ConfigChange
     replicas: 1
     revisionHistoryLimit: 10
@@ -172,12 +168,16 @@ objects:
             claimName: sugar9-html
         containers:
           - name: web
-            image: 
+            image: stefanos87/sugar9-apache-php:1.9
             ports:
               - containerPort: 80
                 protocol: TCP
               - containerPort: 8080
                 protocol: TCP
+            env:
+            - name: REPO_SUGAR
+              value: "${REPO_SUGAR}"
+                
             resources: {}
             volumeMounts:
             - name: sugar9-html
@@ -213,16 +213,6 @@ objects:
       resources: {}
       activeDeadlineSeconds: 21600
     triggers:
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-            - elasticsearch
-          from:
-            kind: ImageStreamTag
-      
-            name: 'elasticsearch:5.6.7'
-          lastTriggeredImage:
       - type: ConfigChange
     replicas: 1
     revisionHistoryLimit: 10
@@ -244,7 +234,7 @@ objects:
             emptyDir: {}
         containers:
           - name: elasticsearch
-            image:
+            image: elasticsearch:5.6.7
             ports:
               - containerPort: 9200
                 protocol: TCP
@@ -285,16 +275,6 @@ objects:
       resources: {}
       activeDeadlineSeconds: 21600
     triggers:
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-            - db
-          from:
-            kind: ImageStreamTag
-      
-            name: 'db:1.0'
-          lastTriggeredImage:
       - type: ConfigChange
     replicas: 1
     revisionHistoryLimit: 10
@@ -317,7 +297,7 @@ objects:
             claimName: sugar9-mysql
         containers:
           - name: db
-            image:
+            image: stefanos87/sugar9mysql57:1.0
             ports:
               - containerPort: 3306
                 protocol: TCP
@@ -358,16 +338,6 @@ objects:
       resources: {}
       activeDeadlineSeconds: 21600
     triggers:
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-            - cron
-          from:
-            kind: ImageStreamTag
-      
-            name: 'cron:1.0'
-          lastTriggeredImage:
       - type: ConfigChange
     replicas: 1
     revisionHistoryLimit: 10
@@ -390,7 +360,7 @@ objects:
             claimName: sugar9-html
         containers:
           - name: cron
-            image:
+            image: stefanos87/sugar9cron:1.0
             ports:
               - containerPort: 8080
                 protocol: TCP
