@@ -17,10 +17,21 @@ parameters:
     description: Volume space available for data, e.g. 512Mi, 2Gi.
     value: 1Gi
     required: true
-  - name: REPO_SUGAR
+  - name: REPO_URL_SUGAR
     displayName: Url repo
-    value: https://github.com/stefanos87/sugar9
+    value: gitlab.afbnet.it/sstirati/sugar9files
     required: true
+
+  - name: REPO_USER
+    displayName: User repo
+    value: sstirati
+    required: true
+
+  - name: REPO_PASSWORD
+    displayName: Password repo
+    required: true
+
+    
 
     
 
@@ -175,8 +186,8 @@ objects:
               - containerPort: 8080
                 protocol: TCP
             env:
-            - name: REPO_SUGAR
-              value: "${REPO_SUGAR}"
+            - name: REPO_URL_SUGAR
+              value: "${REPO_URL_SUGAR}"
                 
             resources: {}
             volumeMounts:
@@ -184,7 +195,7 @@ objects:
               mountPath: "/var/www/html"
             terminationMessagePath: /dev/termination-log
             terminationMessagePolicy: File
-            imagePullPolicy: IfNotPresent
+            imagePullPolicy: Always
         restartPolicy: Always
         terminationGracePeriodSeconds: 30
         dnsPolicy: ClusterFirst
